@@ -1,7 +1,7 @@
 import os
 import socket
 
-from jupyterhub_fancy_profiles import setup_ui
+from jupyterhub_fancy_profiles import setup_metrics, setup_ui
 
 c = get_config()  # noqa
 
@@ -16,7 +16,7 @@ c.JupyterHub.spawner_class = "kubespawner.KubeSpawner"
 c.Spawner.cmd = ["jupyterhub-singleuser"]
 
 # A longer timout, since pulling images locally can be slow.
-c.Spawner.start_timeout = 120
+c.Spawner.start_timeout = 600
 
 # Don't try to cleanup servers on exit - since in general for k8s, we want
 # the hub to be able to restart without losing user containers
@@ -56,6 +56,10 @@ c.JupyterHub.hub_connect_ip = host_ip
 
 # Setup jupyterhub_fancy_profiles
 setup_ui(c)
+setup_metrics()
+
+# Allow local Prometheus to scrape /hub/metrics without a token
+c.JupyterHub.authenticate_prometheus = False
 
 # Provide an example profile with various options in use
 c.KubeSpawner.profile_list = [

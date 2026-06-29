@@ -1,0 +1,398 @@
+{
+  "__inputs": [
+    {
+      "name": "DS_PROMETHEUS",
+      "label": "Prometheus",
+      "description": "Prometheus scraping JupyterHub's /hub/metrics endpoint",
+      "type": "datasource",
+      "pluginId": "prometheus",
+      "pluginName": "Prometheus"
+    }
+  ],
+  "__requires": [
+    { "type": "grafana", "id": "grafana", "name": "Grafana", "version": "10.0.0" },
+    { "type": "datasource", "id": "prometheus", "name": "Prometheus", "version": "1.0.0" },
+    { "type": "panel", "id": "stat", "name": "Stat", "version": "" },
+    { "type": "panel", "id": "heatmap", "name": "Heatmap", "version": "" },
+    { "type": "panel", "id": "timeseries", "name": "Time series", "version": "" },
+    { "type": "panel", "id": "table", "name": "Table", "version": "" }
+  ],
+  "title": "JupyterHub Fancy Profiles — Spawn Metrics",
+  "uid": "fancy-profiles-spawn",
+  "tags": ["jupyterhub", "fancy-profiles"],
+  "schemaVersion": 39,
+  "version": 1,
+  "editable": true,
+  "graphTooltip": 1,
+  "refresh": "30s",
+  "time": { "from": "now-24h", "to": "now" },
+  "timepicker": {},
+  "templating": {
+    "list": [
+      {
+        "name": "profile",
+        "label": "Profile",
+        "type": "query",
+        "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+        "query": { "query": "label_values(jupyterhub_fancy_profiles_spawn_duration_seconds_count, profile)", "refId": "Prometheus-profile-Variable-Query" },
+        "multi": true,
+        "includeAll": true,
+        "allValue": ".+",
+        "current": { "selected": false, "text": ["All"], "value": ["$__all"] },
+        "refresh": 2,
+        "sort": 1
+      },
+      {
+        "name": "image",
+        "label": "Image",
+        "type": "query",
+        "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+        "query": { "query": "label_values(jupyterhub_fancy_profiles_spawn_duration_seconds_count, image)", "refId": "Prometheus-image-Variable-Query" },
+        "multi": true,
+        "includeAll": true,
+        "allValue": ".+",
+        "current": { "selected": false, "text": ["All"], "value": ["$__all"] },
+        "refresh": 2,
+        "sort": 1
+      },
+      {
+        "name": "resources",
+        "label": "Resources",
+        "type": "query",
+        "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+        "query": { "query": "label_values(jupyterhub_fancy_profiles_spawn_duration_seconds_count, resources)", "refId": "Prometheus-resources-Variable-Query" },
+        "multi": true,
+        "includeAll": true,
+        "allValue": ".+",
+        "current": { "selected": false, "text": ["All"], "value": ["$__all"] },
+        "refresh": 2,
+        "sort": 1
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Successful spawns",
+      "gridPos": { "x": 0, "y": 0, "w": 8, "h": 4 },
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "(sum(jupyterhub_fancy_profiles_spawn_duration_seconds_count{status=\"success\",profile=~\"$profile\",image=~\"$image\",resources=~\"$resources\"}) or vector(0)) - (sum(jupyterhub_fancy_profiles_spawn_duration_seconds_count{status=\"success\",profile=~\"$profile\",image=~\"$image\",resources=~\"$resources\"} offset $__range) or vector(0))",
+          "instant": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 0,
+          "color": { "mode": "thresholds" },
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }
+        }
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "textMode": "auto",
+        "graphMode": "none",
+        "colorMode": "value",
+        "justifyMode": "auto",
+        "orientation": "auto"
+      }
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Failed spawns",
+      "gridPos": { "x": 8, "y": 0, "w": 8, "h": 4 },
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "(sum(jupyterhub_fancy_profiles_spawn_duration_seconds_count{status=\"failure\",profile=~\"$profile\",image=~\"$image\",resources=~\"$resources\"}) or vector(0)) - (sum(jupyterhub_fancy_profiles_spawn_duration_seconds_count{status=\"failure\",profile=~\"$profile\",image=~\"$image\",resources=~\"$resources\"} offset $__range) or vector(0))",
+          "instant": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 0,
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "orange", "value": 1 },
+              { "color": "red", "value": 5 }
+            ]
+          }
+        }
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "textMode": "auto",
+        "graphMode": "none",
+        "colorMode": "value",
+        "justifyMode": "auto",
+        "orientation": "auto"
+      }
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Average spawn duration",
+      "gridPos": { "x": 16, "y": 0, "w": 8, "h": 4 },
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "((sum(jupyterhub_fancy_profiles_spawn_duration_seconds_sum{status=\"success\",profile=~\"$profile\",image=~\"$image\",resources=~\"$resources\"}) or vector(0)) - (sum(jupyterhub_fancy_profiles_spawn_duration_seconds_sum{status=\"success\",profile=~\"$profile\",image=~\"$image\",resources=~\"$resources\"} offset $__range) or vector(0))) / ((sum(jupyterhub_fancy_profiles_spawn_duration_seconds_count{status=\"success\",profile=~\"$profile\",image=~\"$image\",resources=~\"$resources\"}) or vector(0)) - (sum(jupyterhub_fancy_profiles_spawn_duration_seconds_count{status=\"success\",profile=~\"$profile\",image=~\"$image\",resources=~\"$resources\"} offset $__range) or vector(0)))",
+          "instant": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "decimals": 1,
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 60 },
+              { "color": "red", "value": 180 }
+            ]
+          }
+        }
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "textMode": "auto",
+        "graphMode": "none",
+        "colorMode": "value",
+        "justifyMode": "auto",
+        "orientation": "auto"
+      }
+    },
+    {
+      "id": 4,
+      "type": "heatmap",
+      "title": "Spawn duration distribution (color = count)",
+      "description": "Density of spawn durations over time. Sparse cells high on the Y axis are outliers — narrow the dashboard filters to identify which profile/image/resources combo they came from.",
+      "gridPos": { "x": 0, "y": 4, "w": 24, "h": 10 },
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (le) (increase(jupyterhub_fancy_profiles_spawn_duration_seconds_bucket{status=\"success\",profile=~\"$profile\",image=~\"$image\",resources=~\"$resources\"}[$__rate_interval]))",
+          "format": "heatmap",
+          "legendFormat": "{{le}}"
+        }
+      ],
+      "options": {
+        "calculate": false,
+        "yAxis": { "axisPlacement": "left", "unit": "s", "reverse": false },
+        "rowsFrame": { "layout": "auto" },
+        "color": { "scheme": "Spectral", "mode": "scheme", "exponent": 0.5, "steps": 64, "reverse": false },
+        "cellGap": 1,
+        "filterValues": { "le": 1e-9 },
+        "tooltip": { "show": true, "yHistogram": true },
+        "legend": { "show": true },
+        "exemplars": { "color": "rgba(255,0,255,0.7)" }
+      }
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "Avg spawn duration per image",
+      "gridPos": { "x": 0, "y": 14, "w": 12, "h": 8 },
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (image) (rate(jupyterhub_fancy_profiles_spawn_duration_seconds_sum{status=\"success\",profile=~\"$profile\",image=~\"$image\",resources=~\"$resources\"}[$__rate_interval])) / sum by (image) (rate(jupyterhub_fancy_profiles_spawn_duration_seconds_count{status=\"success\",profile=~\"$profile\",image=~\"$image\",resources=~\"$resources\"}[$__rate_interval]))",
+          "legendFormat": "{{image}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "spanNulls": true,
+            "showPoints": "auto",
+            "pointSize": 5
+          }
+        }
+      },
+      "options": {
+        "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["mean", "max"] },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      }
+    },
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "Avg spawn duration per (image, resources)",
+      "gridPos": { "x": 12, "y": 14, "w": 12, "h": 8 },
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (image, resources) (rate(jupyterhub_fancy_profiles_spawn_duration_seconds_sum{status=\"success\",profile=~\"$profile\",image=~\"$image\",resources=~\"$resources\"}[$__rate_interval])) / sum by (image, resources) (rate(jupyterhub_fancy_profiles_spawn_duration_seconds_count{status=\"success\",profile=~\"$profile\",image=~\"$image\",resources=~\"$resources\"}[$__rate_interval]))",
+          "legendFormat": "{{image}} / {{resources}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "spanNulls": true,
+            "showPoints": "auto",
+            "pointSize": 5
+          }
+        }
+      },
+      "options": {
+        "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["mean", "max"] },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      }
+    },
+    {
+      "id": 7,
+      "type": "table",
+      "title": "Per-combo stats",
+      "description": "Sortable breakdown over the selected time range: spawn count, min/avg/p95/max duration per (profile, image, resources). Min and max are exact (from the gauge); p95 is bucket-approximated.",
+      "gridPos": { "x": 0, "y": 22, "w": 24, "h": 10 },
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "targets": [
+        {
+          "refId": "count",
+          "expr": "(sum by (profile, image, resources) (jupyterhub_fancy_profiles_spawn_duration_seconds_count{status=\"success\",profile=~\"$profile\",image=~\"$image\",resources=~\"$resources\"})) - (sum by (profile, image, resources) (jupyterhub_fancy_profiles_spawn_duration_seconds_count{status=\"success\",profile=~\"$profile\",image=~\"$image\",resources=~\"$resources\"} offset $__range) or sum by (profile, image, resources) (jupyterhub_fancy_profiles_spawn_duration_seconds_count{status=\"success\",profile=~\"$profile\",image=~\"$image\",resources=~\"$resources\"}) * 0)",
+          "instant": true,
+          "format": "table"
+        },
+        {
+          "refId": "avg",
+          "expr": "((sum by (profile, image, resources) (jupyterhub_fancy_profiles_spawn_duration_seconds_sum{status=\"success\",profile=~\"$profile\",image=~\"$image\",resources=~\"$resources\"})) - (sum by (profile, image, resources) (jupyterhub_fancy_profiles_spawn_duration_seconds_sum{status=\"success\",profile=~\"$profile\",image=~\"$image\",resources=~\"$resources\"} offset $__range) or sum by (profile, image, resources) (jupyterhub_fancy_profiles_spawn_duration_seconds_sum{status=\"success\",profile=~\"$profile\",image=~\"$image\",resources=~\"$resources\"}) * 0)) / ((sum by (profile, image, resources) (jupyterhub_fancy_profiles_spawn_duration_seconds_count{status=\"success\",profile=~\"$profile\",image=~\"$image\",resources=~\"$resources\"})) - (sum by (profile, image, resources) (jupyterhub_fancy_profiles_spawn_duration_seconds_count{status=\"success\",profile=~\"$profile\",image=~\"$image\",resources=~\"$resources\"} offset $__range) or sum by (profile, image, resources) (jupyterhub_fancy_profiles_spawn_duration_seconds_count{status=\"success\",profile=~\"$profile\",image=~\"$image\",resources=~\"$resources\"}) * 0))",
+          "instant": true,
+          "format": "table"
+        },
+        {
+          "refId": "min",
+          "expr": "min by (profile, image, resources) (min_over_time(jupyterhub_fancy_profiles_last_spawn_duration_seconds{status=\"success\",profile=~\"$profile\",image=~\"$image\",resources=~\"$resources\"}[$__range]))",
+          "instant": true,
+          "format": "table"
+        },
+        {
+          "refId": "p95",
+          "expr": "histogram_quantile(0.95, sum by (profile, image, resources, le) (rate(jupyterhub_fancy_profiles_spawn_duration_seconds_bucket{status=\"success\",profile=~\"$profile\",image=~\"$image\",resources=~\"$resources\"}[$__range])))",
+          "instant": true,
+          "format": "table"
+        },
+        {
+          "refId": "max",
+          "expr": "max by (profile, image, resources) (max_over_time(jupyterhub_fancy_profiles_last_spawn_duration_seconds{status=\"success\",profile=~\"$profile\",image=~\"$image\",resources=~\"$resources\"}[$__range]))",
+          "instant": true,
+          "format": "table"
+        }
+      ],
+      "transformations": [
+        { "id": "merge", "options": {} },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": { "Time": true },
+            "indexByName": {
+              "profile": 0,
+              "image": 1,
+              "resources": 2,
+              "Value #count": 3,
+              "Value #min": 4,
+              "Value #avg": 5,
+              "Value #p95": 6,
+              "Value #max": 7
+            },
+            "renameByName": {
+              "Value #count": "spawns",
+              "Value #min": "min (s)",
+              "Value #avg": "avg (s)",
+              "Value #p95": "p95 (s)",
+              "Value #max": "max (s)"
+            }
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "custom": { "align": "auto" } },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "min (s)" },
+            "properties": [{ "id": "unit", "value": "s" }, { "id": "decimals", "value": 1 }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "avg (s)" },
+            "properties": [{ "id": "unit", "value": "s" }, { "id": "decimals", "value": 1 }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "p95 (s)" },
+            "properties": [{ "id": "unit", "value": "s" }, { "id": "decimals", "value": 1 }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "max (s)" },
+            "properties": [{ "id": "unit", "value": "s" }, { "id": "decimals", "value": 1 }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "spawns" },
+            "properties": [{ "id": "unit", "value": "none" }, { "id": "decimals", "value": 0 }]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "sortBy": [{ "displayName": "max (s)", "desc": true }]
+      }
+    },
+    {
+      "id": 8,
+      "type": "timeseries",
+      "title": "Most recent spawn duration per combo",
+      "description": "Each point is one spawn's exact duration, labeled by combo. The line steps because the gauge holds the most recent value between spawns — read the dots, not the line shape.",
+      "gridPos": { "x": 0, "y": 32, "w": 24, "h": 10 },
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "jupyterhub_fancy_profiles_last_spawn_duration_seconds{status=\"success\",profile=~\"$profile\",image=~\"$image\",resources=~\"$resources\"}",
+          "legendFormat": "{{profile}} / {{image}} / {{resources}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "stepAfter",
+            "lineWidth": 1,
+            "fillOpacity": 0,
+            "spanNulls": false,
+            "showPoints": "always",
+            "pointSize": 6
+          }
+        }
+      },
+      "options": {
+        "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["min", "max", "lastNotNull"] },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      }
+    }
+  ]
+}
